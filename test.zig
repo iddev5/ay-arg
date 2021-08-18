@@ -1,10 +1,4 @@
-# ay-arg
-Stupid simple argument parser in Zig for basic uses.  
-My first Zig project
-
-# Example
-test.zig:
-```zig
+// Example run: zig run test.zig -- -test=value -hi hello -justflag
 const std = @import("std");
 const ArgParse = @import("ay_arg.zig").ArgParse;
 
@@ -27,8 +21,3 @@ pub fn main() !void {
         std.debug.print("{s} = {s}\n", .{ k.*, v.* });
     }
 }
-```
-
-# License
-This project is licensed under MIT No Attribution License.  
-See [LICENSE](LICENSE) for more info.
