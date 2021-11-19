@@ -37,40 +37,37 @@ fn next(self: *AyArgparse, index: *usize) ?[]const u8 {
     return null;
 }
 
-fn getDescFromLong(self: *AyArgparse, long: []const u8) ParamDesc {
+fn getDescFromLong(self: *AyArgparse, long: []const u8) !ParamDesc {
     for (self.params) |param| {
         if (mem.eql(u8, param.long, long)) {
             return param;
         }
     }
 
-    unreachable; // TODO;
+    std.debug.print("invalid argument '--{s}'\n", .{long});
+    return error.ArgparseError;
 }
 
-fn getDescFromShort(self: *AyArgparse, short: []const u8) ParamDesc {
+fn getDescFromShort(self: *AyArgparse, short: []const u8) !ParamDesc {
     for (self.params) |param| if (param.short) |p_short| {
         if (mem.eql(u8, p_short, short)) {
             return param;
         }
     };
 
-    unreachable; // TODO;
+    std.debug.print("invalid argument '-{s}'\n", .{short});
+    return error.ArgparseError;
 }
 
 inline fn makeValue(self: *AyArgparse, key: []const u8, value: ?[]const u8, i: *usize, desc: ParamDesc) ![]const u8 {
     return blk: {
         if (desc.need_value) {
-            const res = value orelse self.next(i) orelse {
+            break :blk value orelse self.next(i) orelse {
                 std.debug.print("expected value for key '{s}'\n", .{key});
                 return error.ArgparseError;
             };
-            if (mem.startsWith(u8, res, "-")) {
-                std.debug.print("key '{s}' was followed by another key '{s}' while value was expected\n", .{ key, res });
-                return error.ArgparseError;
-            }
-            break :blk res;
         } else if (value != null) {
-            std.debug.print("found unexpected value '{s}' for key '{s}'\n", .{ value.?, key });
+            std.debug.print("key '{s}' does not take value\n", .{key});
             return error.ArgparseError;
         } else break :blk "true";
     };
@@ -84,11 +81,6 @@ pub fn parse(self: *AyArgparse, args: [][]u8) !void {
         var key = self.next(&i).?;
         var value: ?[]const u8 = null;
 
-        if (mem.indexOf(u8, key, "=")) |pos| {
-            value = key[(pos + 1)..];
-            key = key[0..pos];
-        }
-
         if (mem.startsWith(u8, key, "--")) {
             if (mem.eql(u8, key, "--")) {
                 while (self.next(&i)) |pos|
@@ -96,28 +88,43 @@ pub fn parse(self: *AyArgparse, args: [][]u8) !void {
                 return;
             }
 
-            const key_name = key[2..];
-            const desc = self.getDescFromLong(key_name);
+            if (mem.indexOf(u8, key, "=")) |pos| {
+                value = key[(pos + 1)..];
+                key = key[0..pos];
+            }
 
-            const val = try self.makeValue(key_name, value, &i, desc);
+            const key_name = key[2..];
+            const desc = try self.getDescFromLong(key_name);
+
+            const val = try self.makeValue(key, value, &i, desc);
             try self.arguments.put(self.allocator, key_name, val);
         } else if (mem.startsWith(u8, key, "-")) {
-            for (key[1..]) |k, id| {
-                if (k == '=') break;
+            if (mem.indexOf(u8, key, "=")) |pos| {
+                value = key[(pos + 1)..];
+            }
 
-                const key_name = key[id + 1 .. id + 2];
-                const desc = self.getDescFromShort(key_name);
+            var id: usize = 1;
+            while (id < key.len) : (id += 1) {
+                const key_name = key[id .. id + 1];
+                const desc = try self.getDescFromShort(key_name);
+                const has_value = id + 1 < key.len and key[id + 1] == '=';
 
-                if (key[id + 1] == '=' or id + 2 == key.len) {
-                    const val = try self.makeValue(key_name, value, &i, desc);
-                    try self.arguments.put(self.allocator, desc.long, val);
-                } else {
+                const val = blk: {
                     if (desc.need_value) {
-                        std.debug.print("expected value for key '{s}'\n", .{key_name});
+                        if (!has_value and id + 1 < key.len) {
+                            value = key[id + 1 ..];
+                            id += value.?.len;
+                        }
+                        break :blk value;
                     } else {
-                        try self.arguments.put(self.allocator, desc.long, "true");
+                        break :blk if (has_value) value else null;
                     }
-                }
+                };
+
+                const val_final = try self.makeValue(key, val, &i, desc);
+                try self.arguments.put(self.allocator, key_name, val_final);
+
+                if (has_value) break;
             }
         } else {
             try self.positionals.append(self.allocator, key);
