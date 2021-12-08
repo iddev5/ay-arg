@@ -7,7 +7,7 @@ const Allocator = mem.Allocator;
 args: [][]u8 = undefined,
 arguments: std.StringHashMapUnmanaged([]const u8) = .{},
 positionals: std.ArrayListUnmanaged([]const u8) = .{},
-allocator: *Allocator,
+allocator: Allocator,
 params: []const ParamDesc,
 
 pub const ParamDesc = struct {
@@ -16,7 +16,7 @@ pub const ParamDesc = struct {
     need_value: bool = false,
 };
 
-pub fn init(allocator: *Allocator, params: []const ParamDesc) AyArgparse {
+pub fn init(allocator: Allocator, params: []const ParamDesc) AyArgparse {
     return .{
         .allocator = allocator,
         .params = params,
