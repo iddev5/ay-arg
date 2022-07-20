@@ -129,7 +129,7 @@ pub fn parse(self: *Argparse, args: []const []const u8) (Error || std.mem.Alloca
                 };
 
                 const val_final = try self.makeValue(key, val, &i, desc);
-                try self.arguments.put(self.allocator, key_name, val_final);
+                try self.arguments.put(self.allocator, desc.long, val_final);
 
                 if (has_value) break;
             }
