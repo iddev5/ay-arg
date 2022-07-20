@@ -1,5 +1,5 @@
 const std = @import("std");
-const AyArgparse = @import("AyArgparse.zig");
+const Argparse = @import("main.zig");
 
 pub fn main() !void {
     const allocator = std.testing.allocator;
@@ -7,7 +7,7 @@ pub fn main() !void {
     var args = try std.process.argsAlloc(allocator);
     defer allocator.free(args);
 
-    const params = &[_]AyArgparse.ParamDesc{
+    const params = &[_]Argparse.ParamDesc{
         .{
             .long = "foo",
             .short = "e",
@@ -19,7 +19,7 @@ pub fn main() !void {
         },
     };
 
-    var argparse = AyArgparse.init(allocator, params[0..]);
+    var argparse = Argparse.init(allocator, params[0..]);
     defer argparse.deinit();
 
     try argparse.parse(args[1..]);

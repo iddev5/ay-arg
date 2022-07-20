@@ -1,4 +1,4 @@
-const AyArgparse = @This();
+const Argparse = @This();
 
 const std = @import("std");
 const mem = std.mem;
@@ -23,19 +23,19 @@ pub const ParamDesc = struct {
     need_value: bool = false,
 };
 
-pub fn init(allocator: Allocator, params: []const ParamDesc) AyArgparse {
+pub fn init(allocator: Allocator, params: []const ParamDesc) Argparse {
     return .{
         .allocator = allocator,
         .params = params,
     };
 }
 
-pub fn deinit(self: *AyArgparse) void {
+pub fn deinit(self: *Argparse) void {
     self.arguments.deinit(self.allocator);
     self.positionals.deinit(self.allocator);
 }
 
-fn next(self: *AyArgparse, index: *usize) ?[]const u8 {
+fn next(self: *Argparse, index: *usize) ?[]const u8 {
     if (index.* < self.args.len) {
         index.* += 1;
         return self.args[index.* - 1];
@@ -44,7 +44,7 @@ fn next(self: *AyArgparse, index: *usize) ?[]const u8 {
     return null;
 }
 
-fn getDescFromLong(self: *AyArgparse, long: []const u8) Error!ParamDesc {
+fn getDescFromLong(self: *Argparse, long: []const u8) Error!ParamDesc {
     for (self.params) |param| {
         if (mem.eql(u8, param.long, long)) {
             return param;
@@ -55,7 +55,7 @@ fn getDescFromLong(self: *AyArgparse, long: []const u8) Error!ParamDesc {
     return error.UnknownArgument;
 }
 
-fn getDescFromShort(self: *AyArgparse, short: []const u8) Error!ParamDesc {
+fn getDescFromShort(self: *Argparse, short: []const u8) Error!ParamDesc {
     for (self.params) |param| if (param.short) |p_short| {
         if (mem.eql(u8, p_short, short)) {
             return param;
@@ -66,7 +66,7 @@ fn getDescFromShort(self: *AyArgparse, short: []const u8) Error!ParamDesc {
     return error.UnknownArgument;
 }
 
-inline fn makeValue(self: *AyArgparse, key: []const u8, value: ?[]const u8, i: *usize, desc: ParamDesc) Error![]const u8 {
+inline fn makeValue(self: *Argparse, key: []const u8, value: ?[]const u8, i: *usize, desc: ParamDesc) Error![]const u8 {
     return blk: {
         if (desc.need_value) {
             break :blk value orelse self.next(i) orelse {
@@ -80,7 +80,7 @@ inline fn makeValue(self: *AyArgparse, key: []const u8, value: ?[]const u8, i: *
     };
 }
 
-pub fn parse(self: *AyArgparse, args: [][]u8) (Error || std.mem.Allocator.Error)!void {
+pub fn parse(self: *Argparse, args: [][]u8) (Error || std.mem.Allocator.Error)!void {
     self.args = args;
 
     var i: usize = 0;
