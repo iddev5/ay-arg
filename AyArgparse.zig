@@ -9,6 +9,13 @@ arguments: std.StringHashMapUnmanaged([]const u8) = .{},
 positionals: std.ArrayListUnmanaged([]const u8) = .{},
 allocator: Allocator,
 params: []const ParamDesc,
+error_key: ?[]const u8 = null,
+
+pub const Error = error{
+    UnknownArgument,
+    ExpectedValue,
+    UnexpectedValue,
+};
 
 pub const ParamDesc = struct {
     long: []const u8,
@@ -37,43 +44,43 @@ fn next(self: *AyArgparse, index: *usize) ?[]const u8 {
     return null;
 }
 
-fn getDescFromLong(self: *AyArgparse, long: []const u8) !ParamDesc {
+fn getDescFromLong(self: *AyArgparse, long: []const u8) Error!ParamDesc {
     for (self.params) |param| {
         if (mem.eql(u8, param.long, long)) {
             return param;
         }
     }
 
-    std.debug.print("invalid argument '--{s}'\n", .{long});
-    return error.ArgparseError;
+    self.error_key = long;
+    return error.UnknownArgument;
 }
 
-fn getDescFromShort(self: *AyArgparse, short: []const u8) !ParamDesc {
+fn getDescFromShort(self: *AyArgparse, short: []const u8) Error!ParamDesc {
     for (self.params) |param| if (param.short) |p_short| {
         if (mem.eql(u8, p_short, short)) {
             return param;
         }
     };
 
-    std.debug.print("invalid argument '-{s}'\n", .{short});
-    return error.ArgparseError;
+    self.error_key = short;
+    return error.UnknownArgument;
 }
 
-inline fn makeValue(self: *AyArgparse, key: []const u8, value: ?[]const u8, i: *usize, desc: ParamDesc) ![]const u8 {
+inline fn makeValue(self: *AyArgparse, key: []const u8, value: ?[]const u8, i: *usize, desc: ParamDesc) Error![]const u8 {
     return blk: {
         if (desc.need_value) {
             break :blk value orelse self.next(i) orelse {
-                std.debug.print("expected value for key '{s}'\n", .{key});
-                return error.ArgparseError;
+                self.error_key = key;
+                return error.ExpectedValue;
             };
         } else if (value != null) {
-            std.debug.print("key '{s}' does not take value\n", .{key});
-            return error.ArgparseError;
+            self.error_key = key;
+            return error.UnexpectedValue;
         } else break :blk "true";
     };
 }
 
-pub fn parse(self: *AyArgparse, args: [][]u8) !void {
+pub fn parse(self: *AyArgparse, args: [][]u8) (Error || std.mem.Allocator.Error)!void {
     self.args = args;
 
     var i: usize = 0;
