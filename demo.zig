@@ -1,5 +1,5 @@
 const std = @import("std");
-const Argparse = @import("main.zig");
+const Argparse = @import("ay-arg");
 
 pub fn main() !void {
     const allocator = std.testing.allocator;
