@@ -138,3 +138,87 @@ pub fn parse(self: *Argparse, args: []const []const u8) (Error || std.mem.Alloca
         }
     }
 }
+
+const testing = @import("std").testing;
+const expectStrings = testing.expectEqualStrings;
+const expectError = testing.expectError;
+
+test "long param" {
+    const params = &[_]ParamDesc{
+        .{ .long = "simple_long" },
+        .{ .long = "long_with_value", .need_value = true },
+        .{ .long = "another_long_with_value", .need_value = true },
+    };
+
+    const args = &[_][]const u8{
+        "--simple_long",
+        "--long_with_value",
+        "10",
+        "--another_long_with_value=20",
+    };
+
+    var argparse = Argparse.init(std.testing.allocator, params);
+    defer argparse.deinit();
+
+    argparse.parse(args) catch unreachable;
+
+    try expectStrings("true", argparse.arguments.get("simple_long").?);
+    try expectStrings("10", argparse.arguments.get("long_with_value").?);
+    try expectStrings("20", argparse.arguments.get("another_long_with_value").?);
+}
+
+test "short param" {
+    const params = &[_]ParamDesc{
+        .{ .long = "simple_short", .short = "s" },
+        .{ .long = "short_with_value", .short = "v", .need_value = true },
+        .{ .long = "another_short_with_value", .short = "a", .need_value = true },
+        .{ .long = "no_value", .short = "n" },
+        .{ .long = "yes_value", .short = "y", .need_value = true },
+    };
+
+    const args = &[_][]const u8{ "-s", "-v", "2", "-a3", "-ny4" };
+
+    var argparse = Argparse.init(std.testing.allocator, params);
+    defer argparse.deinit();
+
+    argparse.parse(args) catch unreachable;
+
+    try expectStrings("true", argparse.arguments.get("simple_short").?);
+    try expectStrings("2", argparse.arguments.get("short_with_value").?);
+    try expectStrings("3", argparse.arguments.get("another_short_with_value").?);
+    try expectStrings("true", argparse.arguments.get("no_value").?);
+    try expectStrings("4", argparse.arguments.get("yes_value").?);
+}
+
+test "unknown argument" {
+    const params = &[_]ParamDesc{};
+
+    const args = &[_][]const u8{"-e"};
+
+    var argparse = Argparse.init(std.testing.allocator, params);
+    defer argparse.deinit();
+
+    try expectError(error.UnknownArgument, argparse.parse(args));
+}
+
+test "expected value" {
+    const params = &[_]ParamDesc{.{ .long = "value", .need_value = true }};
+
+    const args = &[_][]const u8{"--value"};
+
+    var argparse = Argparse.init(std.testing.allocator, params);
+    defer argparse.deinit();
+
+    try expectError(error.ExpectedValue, argparse.parse(args));
+}
+
+test "unexpected value" {
+    const params = &[_]ParamDesc{.{ .long = "value" }};
+
+    const args = &[_][]const u8{"--value=10"};
+
+    var argparse = Argparse.init(std.testing.allocator, params);
+    defer argparse.deinit();
+
+    try expectError(error.UnexpectedValue, argparse.parse(args));
+}
