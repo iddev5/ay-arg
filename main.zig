@@ -4,7 +4,7 @@ const std = @import("std");
 const mem = std.mem;
 const Allocator = mem.Allocator;
 
-args: [][]u8 = undefined,
+args: []const []const u8 = undefined,
 arguments: std.StringHashMapUnmanaged([]const u8) = .{},
 positionals: std.ArrayListUnmanaged([]const u8) = .{},
 allocator: Allocator,
@@ -80,7 +80,7 @@ inline fn makeValue(self: *Argparse, key: []const u8, value: ?[]const u8, i: *us
     };
 }
 
-pub fn parse(self: *Argparse, args: [][]u8) (Error || std.mem.Allocator.Error)!void {
+pub fn parse(self: *Argparse, args: []const []const u8) (Error || std.mem.Allocator.Error)!void {
     self.args = args;
 
     var i: usize = 0;
