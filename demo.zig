@@ -8,15 +8,8 @@ pub fn main() !void {
     defer allocator.free(args);
 
     const params = &[_]Argparse.ParamDesc{
-        .{
-            .long = "foo",
-            .short = "e",
-        },
-        .{
-            .long = "test",
-            .short = "s",
-            .need_value = true,
-        },
+        .{ .long = "foo", .short = 'e' },
+        .{ .long = "test", .short = 's', .need_value = true },
     };
 
     var argparse = Argparse.init(allocator, params[0..]);

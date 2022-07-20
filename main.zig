@@ -19,7 +19,7 @@ pub const Error = error{
 
 pub const ParamDesc = struct {
     long: []const u8,
-    short: ?[]const u8 = null,
+    short: ?u8 = null,
     need_value: bool = false,
 };
 
@@ -57,7 +57,7 @@ fn getDescFromLong(self: *Argparse, long: []const u8) Error!ParamDesc {
 
 fn getDescFromShort(self: *Argparse, short: []const u8) Error!ParamDesc {
     for (self.params) |param| if (param.short) |p_short| {
-        if (mem.eql(u8, p_short, short)) {
+        if (p_short == short[0]) {
             return param;
         }
     };
@@ -169,11 +169,11 @@ test "long param" {
 
 test "short param" {
     const params = &[_]ParamDesc{
-        .{ .long = "simple_short", .short = "s" },
-        .{ .long = "short_with_value", .short = "v", .need_value = true },
-        .{ .long = "another_short_with_value", .short = "a", .need_value = true },
-        .{ .long = "no_value", .short = "n" },
-        .{ .long = "yes_value", .short = "y", .need_value = true },
+        .{ .long = "simple_short", .short = 's' },
+        .{ .long = "short_with_value", .short = 'v', .need_value = true },
+        .{ .long = "another_short_with_value", .short = 'a', .need_value = true },
+        .{ .long = "no_value", .short = 'n' },
+        .{ .long = "yes_value", .short = 'y', .need_value = true },
     };
 
     const args = &[_][]const u8{ "-s", "-v", "2", "-a3", "-ny4" };
