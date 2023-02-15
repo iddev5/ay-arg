@@ -2,7 +2,7 @@ const std = @import("std");
 const Argparse = @import("ay-arg");
 
 pub fn main() !void {
-    const allocator = std.testing.allocator;
+    const allocator = std.heap.page_allocator;
 
     var args = try std.process.argsAlloc(allocator);
     defer allocator.free(args);

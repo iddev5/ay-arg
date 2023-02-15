@@ -1,18 +1,18 @@
 const std = @import("std");
 
-pub const pkg = std.build.Pkg{
-    .name = "ay-arg",
-    .source = .{ .path = thisDir() ++ "/main.zig" },
-};
-
 pub fn build(b: *std.build.Builder) void {
     const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
+    const optimize = b.standardOptimizeOption(.{});
 
-    const exe = b.addExecutable("demo", "demo.zig");
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.addPackage(pkg);
+    const exe = b.addExecutable(.{
+        .name = "demo",
+        .root_source_file = .{ .path = "demo.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.addModule("ay-arg", b.createModule(.{
+        .source_file = .{ .path = "main.zig" },
+    }));
     exe.install();
 
     const run_cmd = exe.run();
@@ -24,9 +24,11 @@ pub fn build(b: *std.build.Builder) void {
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    const exe_tests = b.addTest("main.zig");
-    exe_tests.setTarget(target);
-    exe_tests.setBuildMode(mode);
+    const exe_tests = b.addTest(.{
+        .root_source_file = .{ .path = "main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&exe_tests.step);
