@@ -4,6 +4,11 @@ pub fn build(b: *std.build.Builder) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    b.addModule(.{
+        .name = "ay-arg",
+        .source_file = .{ .path = "main.zig" },
+    });
+
     const exe = b.addExecutable(.{
         .name = "demo",
         .root_source_file = .{ .path = "demo.zig" },
