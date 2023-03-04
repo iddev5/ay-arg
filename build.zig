@@ -15,9 +15,7 @@ pub fn build(b: *std.build.Builder) void {
         .target = target,
         .optimize = optimize,
     });
-    exe.addModule("ay-arg", b.createModule(.{
-        .source_file = .{ .path = "main.zig" },
-    }));
+    exe.addModule("ay-arg", b.modules.get("ay-arg").?);
     exe.install();
 
     const run_cmd = exe.run();
