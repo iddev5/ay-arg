@@ -4,8 +4,7 @@ pub fn build(b: *std.build.Builder) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    b.addModule(.{
-        .name = "ay-arg",
+    _ = b.addModule("ay-arg", .{
         .source_file = .{ .path = "main.zig" },
     });
 
