@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn build(b: *std.build.Builder) void {
+pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -15,9 +15,10 @@ pub fn build(b: *std.build.Builder) void {
         .optimize = optimize,
     });
     exe.addModule("ay-arg", b.modules.get("ay-arg").?);
-    exe.install();
 
-    const run_cmd = exe.run();
+    b.installArtifact(exe);
+
+    const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
         run_cmd.addArgs(args);
@@ -32,10 +33,8 @@ pub fn build(b: *std.build.Builder) void {
         .optimize = optimize,
     });
 
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&exe_tests.step);
-}
+    const run_exe_tests = b.addRunArtifact(exe_tests);
 
-fn thisDir() []const u8 {
-    return std.fs.path.dirname(@src().file) orelse ".";
+    const test_step = b.step("test", "Run unit tests");
+    test_step.dependOn(&run_exe_tests.step);
 }
