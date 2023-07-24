@@ -35,6 +35,14 @@ pub fn deinit(self: *Argparse) void {
     self.positionals.deinit(self.allocator);
 }
 
+pub fn renderError(self: *Argparse, writer: anytype, err: Error) !void {
+    switch (err) {
+        error.UnknownArgument => try writer.print("unknown argument: '--{s}'\n", .{self.error_key.?}),
+        error.ExpectedValue => try writer.print("expected value for key '{s}'\n", .{self.error_key.?}),
+        error.UnexpectedValue => try writer.print("key '{s}' does not take value\n", .{self.error_key.?}),
+    }
+}
+
 fn next(self: *Argparse, index: *usize) ?[]const u8 {
     if (index.* < self.args.len) {
         index.* += 1;
@@ -128,7 +136,7 @@ pub fn parse(self: *Argparse, args: []const []const u8) (Error || std.mem.Alloca
                     }
                 };
 
-                const val_final = try self.makeValue(key, val, &i, desc);
+                const val_final = try self.makeValue(key_name, val, &i, desc);
                 try self.arguments.put(self.allocator, desc.long, val_final);
 
                 if (has_value) break;

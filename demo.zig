@@ -15,7 +15,10 @@ pub fn main() !void {
     var argparse = Argparse.init(allocator, params[0..]);
     defer argparse.deinit();
 
-    try argparse.parse(args[1..]);
+    argparse.parse(args[1..]) catch |err| switch (err) {
+        error.OutOfMemory => |e| return e,
+        else => |e| return try argparse.renderError(std.io.getStdErr().writer(), e),
+    };
 
     var iter = argparse.arguments.iterator();
     while (iter.next()) |entry| {
