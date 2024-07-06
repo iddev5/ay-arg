@@ -56,6 +56,10 @@ pub fn renderError(self: *Argparse, writer: anytype, err: Error) !void {
     }
 }
 
+pub fn isEmpty(arg: *Argparse) bool {
+    return arg.arguments.size == 0 and arg.positionals.items.len == 0;
+}
+
 pub fn renderHelp(arg: *Argparse, writer: anytype) !void {
     var max_len: usize = 0;
     for (arg.params) |param| {

@@ -24,7 +24,7 @@ pub fn main() !void {
         else => |e| return try argparse.renderError(std.io.getStdErr().writer(), e),
     };
 
-    if (argparse.arguments.contains("help")) {
+    if (argparse.isEmpty() or argparse.arguments.contains("help")) {
         try argparse.renderHelp(std.io.getStdOut().writer());
         return;
     }
