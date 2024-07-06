@@ -82,19 +82,20 @@ pub fn renderHelp(arg: *Argparse, writer: anytype) !void {
         try writer.writeByteNTimes(' ', (max_len - param.getPrefixLength()) + 2);
 
         if (param.desc) |desc| {
-            const parts = @divFloor(desc.len, desc_max_length);
-            {
-                // TODO: make parts on word boundary rather than arbitarily
-                var i: usize = 0;
-                while (i <= parts) : (i += 1) {
-                    const start = i * desc_max_length;
-                    const end = @min(desc.len, (i + 1) * desc_max_length);
-                    try writer.writeAll(desc[start..end]);
+            var len: usize = 0;
+            var iter = std.mem.splitSequence(u8, desc, " ");
+            while (iter.next()) |part| {
+                if (len + part.len > desc_max_length) {
                     _ = try writer.writeByte('\n');
-                    if (i != parts)
-                        try writer.writeByteNTimes(' ', max_len + 4);
+                    try writer.writeByteNTimes(' ', max_len + 4);
+                    len = 0;
                 }
+
+                try writer.writeAll(part);
+                _ = try writer.writeByte(' ');
+                len += part.len;
             }
+            _ = try writer.writeByte('\n');
         }
     }
 }
