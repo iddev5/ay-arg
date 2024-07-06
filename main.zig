@@ -11,7 +11,7 @@ allocator: Allocator,
 params: []const ParamDesc,
 error_key: ?[]const u8 = null,
 
-pub const desc_max_length = 50;
+pub var desc_max_length: usize = 50;
 
 pub const Error = error{
     UnknownArgument,
@@ -74,8 +74,6 @@ pub fn renderHelp(arg: *Argparse, writer: anytype) !void {
         try writer.writeByteNTimes(' ', (max_len - param.getPrefixLength()) + 2);
 
         if (param.desc) |desc| {
-            // TODO: desc_max_length should be determined at runtime based on terminal
-            // width, but again, its not good to assume this is going to be printed on terminal?
             const parts = @divFloor(desc.len, desc_max_length);
             {
                 // TODO: make parts on word boundary rather than arbitarily

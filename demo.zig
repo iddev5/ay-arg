@@ -7,6 +7,9 @@ pub fn main() !void {
     var args = try std.process.argsAlloc(allocator);
     defer allocator.free(args);
 
+    // Set a custom value
+    Argparse.desc_max_length = 60;
+
     const params = &[_]Argparse.ParamDesc{
         .{ .long = "help", .short = 'h', .desc = "Prints this help message" },
         .{ .long = "foo", .short = 'e', .desc = "This is foo without value. This is meant to be a very long line exceeding the limit for one line. Now that we are doing it, better make it three lines" },
