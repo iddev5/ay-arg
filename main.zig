@@ -11,6 +11,8 @@ allocator: Allocator,
 params: []const ParamDesc,
 error_key: ?[]const u8 = null,
 
+pub const desc_max_length = 50;
+
 pub const Error = error{
     UnknownArgument,
     ExpectedValue,
@@ -21,6 +23,16 @@ pub const ParamDesc = struct {
     long: []const u8,
     short: ?u8 = null,
     need_value: bool = false,
+    desc: ?[]const u8 = null,
+
+    fn getPrefixLength(pd: *const ParamDesc) usize {
+        // length of -x,_ is 4
+        var len: usize = if (pd.short) |_| 4 else 0;
+        // + 2 is for --
+        len += pd.long.len + 2;
+
+        return len;
+    }
 };
 
 pub fn init(allocator: Allocator, params: []const ParamDesc) Argparse {
@@ -40,6 +52,44 @@ pub fn renderError(self: *Argparse, writer: anytype, err: Error) !void {
         error.UnknownArgument => try writer.print("unknown argument: '--{s}'\n", .{self.error_key.?}),
         error.ExpectedValue => try writer.print("expected value for key '{s}'\n", .{self.error_key.?}),
         error.UnexpectedValue => try writer.print("key '{s}' does not take value\n", .{self.error_key.?}),
+    }
+}
+
+pub fn renderHelp(arg: *Argparse, writer: anytype) !void {
+    var max_len: usize = 0;
+    for (arg.params) |param| {
+        const len = param.getPrefixLength();
+        if (len > max_len)
+            max_len = len;
+    }
+
+    for (arg.params) |param| {
+        try writer.writeAll("  ");
+        if (param.short) |short|
+            try writer.print("-{c}, ", .{short});
+
+        try writer.print("--{s}", .{param.long});
+
+        // Minimum of 2 space
+        try writer.writeByteNTimes(' ', (max_len - param.getPrefixLength()) + 2);
+
+        if (param.desc) |desc| {
+            // TODO: desc_max_length should be determined at runtime based on terminal
+            // width, but again, its not good to assume this is going to be printed on terminal?
+            const parts = @divFloor(desc.len, desc_max_length);
+            {
+                // TODO: make parts on word boundary rather than arbitarily
+                var i: usize = 0;
+                while (i <= parts) : (i += 1) {
+                    const start = i * desc_max_length;
+                    const end = @min(desc.len, (i + 1) * desc_max_length);
+                    try writer.writeAll(desc[start..end]);
+                    _ = try writer.writeByte('\n');
+                    if (i != parts)
+                        try writer.writeByteNTimes(' ', max_len + 4);
+                }
+            }
+        }
     }
 }
 

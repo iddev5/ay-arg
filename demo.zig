@@ -8,8 +8,9 @@ pub fn main() !void {
     defer allocator.free(args);
 
     const params = &[_]Argparse.ParamDesc{
-        .{ .long = "foo", .short = 'e' },
-        .{ .long = "test", .short = 's', .need_value = true },
+        .{ .long = "help", .short = 'h', .desc = "Prints this help message" },
+        .{ .long = "foo", .short = 'e', .desc = "This is foo without value. This is meant to be a very long line exceeding the limit for one line. Now that we are doing it, better make it three lines" },
+        .{ .long = "test", .short = 's', .need_value = true, .desc = "This is test with value" },
     };
 
     var argparse = Argparse.init(allocator, params[0..]);
@@ -19,6 +20,11 @@ pub fn main() !void {
         error.OutOfMemory => |e| return e,
         else => |e| return try argparse.renderError(std.io.getStdErr().writer(), e),
     };
+
+    if (argparse.arguments.contains("help")) {
+        try argparse.renderHelp(std.io.getStdOut().writer());
+        return;
+    }
 
     var iter = argparse.arguments.iterator();
     while (iter.next()) |entry| {
