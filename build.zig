@@ -4,17 +4,17 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    _ = b.addModule("ay-arg", .{
-        .source_file = .{ .path = "main.zig" },
+    const mod = b.addModule("ay-arg", .{
+        .root_source_file = b.path("main.zig"),
     });
 
     const exe = b.addExecutable(.{
         .name = "demo",
-        .root_source_file = .{ .path = "demo.zig" },
+        .root_source_file = b.path("demo.zig"),
         .target = target,
         .optimize = optimize,
     });
-    exe.addModule("ay-arg", b.modules.get("ay-arg").?);
+    exe.root_module.addImport("ay-arg", mod);
 
     b.installArtifact(exe);
 
@@ -28,7 +28,7 @@ pub fn build(b: *std.Build) void {
     run_step.dependOn(&run_cmd.step);
 
     const exe_tests = b.addTest(.{
-        .root_source_file = .{ .path = "main.zig" },
+        .root_source_file = b.path("main.zig"),
         .target = target,
         .optimize = optimize,
     });
