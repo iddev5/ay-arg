@@ -30,6 +30,7 @@ pub const ParamDesc = struct {
         var len: usize = if (pd.short) |_| 4 else 0;
         // + 2 is for --
         len += pd.long.len + 2;
+        len += if (pd.need_value) " <value>".len else 0;
 
         return len;
     }
@@ -69,6 +70,9 @@ pub fn renderHelp(arg: *Argparse, writer: anytype) !void {
             try writer.print("-{c}, ", .{short});
 
         try writer.print("--{s}", .{param.long});
+
+        if (param.need_value)
+            try writer.writeAll(" <value>");
 
         // Minimum of 2 space
         try writer.writeByteNTimes(' ', (max_len - param.getPrefixLength()) + 2);
